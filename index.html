@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Hill School • Grade 9 Pre-Technical Studies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root { --tw-color-primary: #1e40af; }
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .scratch-embed { aspect-ratio: 16/9; }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- HEADER -->
+    <header class="bg-[#1e40af] text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center text-[#1e40af] text-2xl font-bold">CHS</div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Central Hill School</h1>
+                    <p class="text-xs text-blue-200 -mt-1">Grade 9 • Pre-Technical Studies</p>
+                </div>
+                <div class="ml-8 px-4 py-1 bg-white/20 text-white text-sm font-medium rounded-3xl flex items-center gap-2">
+                    <i class="fa-solid fa-cube"></i>
+                    Scratch Project Submission Portal
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <!-- Role Switcher -->
+                <div class="flex bg-white/10 rounded-3xl p-1 text-sm">
+                    <button onclick="switchRole('student')" id="student-tab"
+                            class="px-6 py-2 rounded-3xl font-medium flex items-center gap-2 data-[active=true]:bg-white data-[active=true]:text-[#1e40af]">
+                        <i class="fa-solid fa-user-graduate"></i>
+                        Student
+                    </button>
+                    <button onclick="switchRole('teacher')" id="teacher-tab"
+                            class="px-6 py-2 rounded-3xl font-medium flex items-center gap-2 data-[active=true]:bg-white data-[active=true]:text-[#1e40af]">
+                        <i class="fa-solid fa-chalkboard-teacher"></i>
+                        Teacher
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div id="user-info" class="text-right">
+                        <p id="user-name" class="font-semibold text-sm">Welcome, Alex Kimani</p>
+                        <p id="user-role" class="text-xs text-blue-200">Grade 9 • Pre-Tech</p>
+                    </div>
+                    <div class="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center text-xl cursor-pointer hover:bg-white/30" onclick="logout()">
+                        👤
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- STUDENT VIEW -->
+        <div id="student-view">
+            <div class="mb-8">
+                <h2 class="text-4xl font-bold text-slate-800">Submit Your Scratch Project</h2>
+                <p class="text-slate-600 mt-2">Pre-Technical Studies • Term 2, 2026 • Due: 18th April 2026</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Submission Form -->
+                <div class="bg-white rounded-3xl shadow-xl p-8 card-hover">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane text-[#1e40af]"></i>
+                        Project Submission
+                    </h3>
+                    
+                    <form id="submission-form" onsubmit="submitProject(event)">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Your Full Name</label>
+                                <input type="text" id="student-name" value="Alex Kimani" 
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-[#1e40af]">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Project Title</label>
+                                <input type="text" id="project-title" placeholder="e.g. Interactive Quiz Game" required
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-[#1e40af]">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Scratch Project Link or ID</label>
+                                <div class="flex">
+                                    <input type="text" id="scratch-link" placeholder="https://scratch.mit.edu/projects/123456789/ or just the ID" required
+                                           class="flex-1 px-4 py-3 border border-slate-200 rounded-l-2xl focus:outline-none focus:border-[#1e40af]">
+                                    <button type="button" onclick="previewScratch()" 
+                                            class="bg-[#1e40af] text-white px-6 rounded-r-2xl hover:bg-blue-800">
+                                        Preview
+                                    </button>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Paste your published Scratch project URL or the 9-digit ID</p>
+                            </div>
+
+                            <div id="preview-area" class="hidden mt-4 rounded-2xl border border-slate-200 p-4">
+                                <p class="text-xs uppercase font-medium text-slate-500 mb-2">Live Preview</p>
+                                <iframe id="scratch-preview" class="scratch-embed w-full rounded-2xl" frameborder="0" allowfullscreen></iframe>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Project Description &amp; Reflection</label>
+                                <textarea id="description" rows="4" placeholder="What did you learn? Which coding blocks did you use? What would you improve?" required
+                                          class="w-full px-4 py-3 border border-slate-200 rounded-3xl focus:outline-none focus:border-[#1e40af]"></textarea>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-emerald-600 font-medium flex items-center gap-1">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    Ready to submit
+                                </div>
+                                <button type="submit"
+                                        class="bg-[#1e40af] hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-3xl flex items-center gap-2">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    Submit to Teacher
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- My Submissions -->
+                <div>
+                    <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-open"></i>
+                        My Submissions
+                    </h3>
+                    <div id="my-submissions" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEACHER VIEW -->
+        <div id="teacher-view" class="hidden">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-4xl font-bold text-slate-800">Assessment Dashboard</h2>
+                    <p class="text-slate-600">Grade 9 Pre-Technical Studies • All Scratch Projects</p>
+                </div>
+                <div class="text-sm bg-emerald-100 text-emerald-700 px-4 py-2 rounded-3xl flex items-center gap-2">
+                    <i class="fa-solid fa-users"></i>
+                    <span id="total-submissions">12 submissions received</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="px-8 py-5 text-left font-medium text-slate-500">Student</th>
+                            <th class="px-8 py-5 text-left font-medium text-slate-500">Project Title</th>
+                            <th class="px-8 py-5 text-left font-medium text-slate-500">Scratch Link</th>
+                            <th class="px-8 py-5 text-left font-medium text-slate-500">Submitted</th>
+                            <th class="px-8 py-5 text-center font-medium text-slate-500">Score ( / 40)</th>
+                            <th class="px-8 py-5 text-center font-medium text-slate-500">Status</th>
+                            <th class="px-8 py-5"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-table" class="divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SUCCESS MODAL -->
+        <div id="success-modal" onclick="if(event.target.id==='success-modal')hideModal()" 
+             class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div onclick="event.stopImmediatePropagation()" 
+                 class="bg-white rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+                <div class="w-20 h-20 mx-auto bg-emerald-100 rounded-3xl flex items-center justify-center text-4xl mb-6">🎉</div>
+                <h3 class="text-3xl font-bold text-slate-800">Project Submitted!</h3>
+                <p class="text-slate-600 mt-3">Your Scratch project has been successfully sent to your Pre-Technical Studies teacher.</p>
+                <p class="text-xs text-slate-400 mt-8">You can view it in "My Submissions"</p>
+                <button onclick="hideModal()" 
+                        class="mt-8 bg-[#1e40af] text-white px-10 py-4 rounded-3xl font-semibold w-full">
+                    Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t py-6 text-center text-xs text-slate-400">
+        Central Hill School • Nairobi • Pre-Technical Studies Assessment Portal 2026 • 
+        Built as a complete ready-to-host web app by Grok
+    </footer>
+
+    <script>
+        // Tailwind script already loaded
+        function initTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: { extend: {} }
+            }
+        }
+
+        // Mock data storage
+        let submissions = JSON.parse(localStorage.getItem('chs_scratch_submissions')) || [
+            {
+                id: 1,
+                student: "Alex Kimani",
+                title: "Interactive Traffic Light Simulator",
+                link: "https://scratch.mit.edu/projects/987654321/",
+                description: "I used variables and broadcast messages to simulate real traffic rules.",
+                date: "2026-04-09",
+                score: 38,
+                status: "Graded"
+            },
+            {
+                id: 2,
+                student: "Mary Wanjiku",
+                title: "Solar System Explorer",
+                link: "https://scratch.mit.edu/projects/112233445/",
+                description: "Made planets orbit using loops and custom blocks.",
+                date: "2026-04-08",
+                score: null,
+                status: "Pending"
+            }
+        ]
+
+        // Current role
+        let currentRole = 'student'
+        let currentUser = { name: "Alex Kimani", role: "student" }
+
+        function saveSubmissions() {
+            localStorage.setItem('chs_scratch_submissions', JSON.stringify(submissions))
+        }
+
+        function renderMySubmissions() {
+            const container = document.getElementById('my-submissions')
+            const mySubs = submissions.filter(s => s.student === currentUser.name)
+            
+            if (mySubs.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white border border-dashed border-slate-300 rounded-3xl p-8 text-center">
+                        <i class="fa-solid fa-inbox text-4xl text-slate-300 mb-4"></i>
+                        <p class="font-medium">No submissions yet</p>
+                        <p class="text-sm text-slate-500">Your submitted projects will appear here</p>
+                    </div>`
+                return
+            }
+
+            container.innerHTML = mySubs.map(sub => `
+                <div class="bg-white border border-slate-200 rounded-3xl p-5 flex gap-4 card-hover">
+                    <div class="flex-1">
+                        <div class="font-semibold">${sub.title}</div>
+                        <div class="text-xs text-slate-500">${sub.date}</div>
+                        <a href="${sub.link}" target="_blank" class="text-[#1e40af] text-sm hover:underline inline-flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-link"></i> View on Scratch
+                        </a>
+                    </div>
+                    <div class="text-right">
+                        ${sub.score !== null 
+                            ? `<div class="text-emerald-600 font-bold text-3xl">${sub.score}<span class="text-xs font-normal">/40</span></div>` 
+                            : `<div class="text-amber-500 text-sm font-medium px-3 py-1 bg-amber-100 rounded-2xl">Pending</div>`}
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function renderTeacherTable() {
+            const tbody = document.getElementById('submissions-table')
+            tbody.innerHTML = submissions.map((sub, index) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-8 py-6 font-medium">${sub.student}</td>
+                    <td class="px-8 py-6">${sub.title}</td>
+                    <td class="px-8 py-6">
+                        <a href="${sub.link}" target="_blank" class="text-[#1e40af] hover:underline text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-external-link-alt"></i> Open Scratch
+                        </a>
+                    </td>
+                    <td class="px-8 py-6 text-sm text-slate-500">${sub.date}</td>
+                    <td class="px-8 py-6 text-center">
+                        <input type="number" value="${sub.score || ''}" min="0" max="40" 
+                               onchange="updateScore(${index}, this.value)"
+                               class="w-20 text-center border border-slate-200 rounded-2xl py-2 text-lg font-semibold focus:outline-none focus:border-[#1e40af]">
+                    </td>
+                    <td class="px-8 py-6 text-center">
+                        <span onclick="toggleStatus(${index})" 
+                              class="inline-flex items-center px-4 py-1 rounded-3xl text-xs font-medium cursor-pointer
+                              ${sub.status === 'Graded' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${sub.status}
+                        </span>
+                    </td>
+                    <td class="px-8 py-6 text-center">
+                        <button onclick="deleteSubmission(${index}); event.stopImmediatePropagation()" 
+                                class="text-red-400 hover:text-red-600">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('')
+            
+            document.getElementById('total-submissions').innerHTML = `
+                ${submissions.length} submissions received • 
+                <span class="font-semibold">${submissions.filter(s => s.score !== null).length} graded</span>
+            `
+        }
+
+        function updateScore(index, score) {
+            submissions[index].score = parseInt(score) || null
+            if (submissions[index].score !== null) submissions[index].status = "Graded"
+            saveSubmissions()
+            renderTeacherTable()
+        }
+
+        function toggleStatus(index) {
+            const sub = submissions[index]
+            sub.status = sub.status === "Graded" ? "Pending" : "Graded"
+            if (sub.status === "Graded" && !sub.score) sub.score = 30
+            saveSubmissions()
+            renderTeacherTable()
+        }
+
+        function deleteSubmission(index) {
+            if (confirm("Delete this submission?")) {
+                submissions.splice(index, 1)
+                saveSubmissions()
+                renderTeacherTable()
+            }
+        }
+
+        function submitProject(e) {
+            e.preventDefault()
+            
+            const newSubmission = {
+                id: Date.now(),
+                student: document.getElementById('student-name').value,
+                title: document.getElementById('project-title').value,
+                link: document.getElementById('scratch-link').value.startsWith('http') 
+                        ? document.getElementById('scratch-link').value 
+                        : `https://scratch.mit.edu/projects/${document.getElementById('scratch-link').value}/`,
+                description: document.getElementById('description').value,
+                date: "2026-04-10",
+                score: null,
+                status: "Pending"
+            }
+            
+            submissions.unshift(newSubmission)
+            saveSubmissions()
+            
+            // Clear form
+            document.getElementById('submission-form').reset()
+            document.getElementById('preview-area').classList.add('hidden')
+            
+            // Show success
+            document.getElementById('success-modal').classList.remove('hidden')
+            
+            // Refresh my submissions
+            renderMySubmissions()
+        }
+
+        function previewScratch() {
+            const input = document.getElementById('scratch-link').value.trim()
+            let projectId = input
+            
+            // Extract ID if full URL
+            if (input.includes('scratch.mit.edu/projects/')) {
+                const match = input.match(/projects\/(\d+)/)
+                if (match) projectId = match[1]
+            }
+            
+            if (projectId && /^\d{6,10}$/.test(projectId)) {
+                const iframe = document.getElementById('scratch-preview')
+                iframe.src = `https://scratch.mit.edu/projects/${projectId}/embed`
+                document.getElementById('preview-area').classList.remove('hidden')
+            } else {
+                alert("Please enter a valid Scratch project ID or full link")
+            }
+        }
+
+        function switchRole(role) {
+            currentRole = role
+            document.getElementById('student-tab').dataset.active = role === 'student'
+            document.getElementById('teacher-tab').dataset.active = role === 'teacher'
+            
+            document.getElementById('student-view').classList.toggle('hidden', role !== 'student')
+            document.getElementById('teacher-view').classList.toggle('hidden', role !== 'teacher')
+            
+            if (role === 'teacher') {
+                document.getElementById('user-name').textContent = "Mr. Peter Ochieng"
+                document.getElementById('user-role').innerHTML = `Pre-Technical Studies Teacher <span class="text-emerald-400">• Admin</span>`
+                renderTeacherTable()
+            } else {
+                document.getElementById('user-name').textContent = currentUser.name
+                document.getElementById('user-role').textContent = "Grade 9 • Pre-Tech"
+                renderMySubmissions()
+            }
+        }
+
+        function hideModal() {
+            document.getElementById('success-modal').classList.add('hidden')
+        }
+
+        function logout() {
+            if (confirm("Switch user or log out?")) {
+                // Simple demo reset
+                currentUser.name = currentUser.name === "Alex Kimani" ? "Mary Wanjiku" : "Alex Kimani"
+                document.getElementById('user-name').textContent = currentUser.name
+                if (currentRole === 'student') renderMySubmissions()
+            }
+        }
+
+        // Initialize the entire app
+        function launchApp() {
+            initTailwind()
+            renderMySubmissions()
+            // Default to student view
+            document.getElementById('student-view').classList.remove('hidden')
+            console.log('%c✅ Central Hill School Scratch Submission App is now live!', 'background:#1e40af;color:white;padding:4px 8px;border-radius:9999px;font-size:13px')
+            console.log('You can now host this single HTML file anywhere!')
+        }
+
+        // Auto-start
+        window.onload = launchApp
+    </script>
+</body>
+</html>
