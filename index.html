@@ -4,55 +4,58 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Central Hill School • Scratch Portal</title>
+<title>CHS Scratch Portal</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<style>
+body { font-family: Inter, sans-serif; }
+</style>
 </head>
 
 <body class="bg-slate-50">
 
-<header class="bg-blue-800 text-white p-5 flex justify-between items-center">
-    <h1 class="text-xl font-bold">CHS Scratch Portal</h1>
+<header class="bg-blue-800 text-white p-4 flex justify-between items-center">
+    <h1 class="font-bold">CHS Scratch Portal</h1>
 
     <div class="flex gap-2">
-        <input type="password" id="teacher-password" placeholder="Teacher password" class="px-2 py-1 text-black rounded">
-        <button onclick="verifyTeacherPassword()" class="bg-white text-blue-800 px-3 rounded">Login</button>
+        <input id="teacher-password" type="password" placeholder="Teacher password"
+               class="px-2 py-1 text-black rounded">
+        <button onclick="loginTeacher()" class="bg-white text-blue-800 px-3 py-1 rounded">
+            Login
+        </button>
     </div>
 </header>
 
-<div class="p-6 max-w-6xl mx-auto">
+<div class="p-6 max-w-5xl mx-auto">
 
 <!-- DEADLINE -->
 <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
-    ⏰ <span id="deadline-text"></span>
+    ⏰ <span id="deadline"></span>
 </div>
 
 <!-- FORM -->
-<form id="submission-form" class="bg-white p-4 rounded shadow mb-6 space-y-2">
-    <input id="student-name" placeholder="Your Name" class="w-full border p-2 rounded">
-    <input id="project-title" placeholder="Project Title" class="w-full border p-2 rounded">
-    <input id="scratch-link" placeholder="Scratch Link or ID" class="w-full border p-2 rounded">
-    <textarea id="description" placeholder="Description" class="w-full border p-2 rounded"></textarea>
+<form onsubmit="submitProject(event)" class="bg-white p-4 rounded shadow space-y-2">
+    <input id="name" placeholder="Student Name" class="w-full border p-2">
+    <input id="title" placeholder="Project Title" class="w-full border p-2">
+    <input id="link" placeholder="Scratch Link or ID" class="w-full border p-2">
+    <textarea id="desc" placeholder="Description" class="w-full border p-2"></textarea>
 
-    <button id="submit-btn" class="bg-blue-700 text-white px-4 py-2 rounded w-full">
-        Submit
+    <button id="submitBtn" class="bg-blue-700 text-white w-full p-2">
+        Submit Project
     </button>
 </form>
 
 <!-- TABLE -->
-<table class="w-full bg-white rounded shadow">
-    <thead class="bg-gray-100">
+<table class="w-full mt-6 bg-white shadow">
+    <thead class="bg-gray-200">
         <tr>
-            <th class="p-2 text-left">Student</th>
-            <th class="p-2 text-left">Title</th>
+            <th class="p-2">Student</th>
+            <th class="p-2">Title</th>
             <th class="p-2">Score</th>
             <th class="p-2">Status</th>
         </tr>
@@ -64,7 +67,7 @@
 
 <script>
 
-/* FIREBASE */
+/* 🔥 FIREBASE CONFIG (REPLACE THIS) */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -74,150 +77,110 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+/* STATE */
+let teacher = false;
+
 /* PASSWORD */
-const TEACHER_HASH = "5f4dcc3b5aa765d61d8327deb882cf99"; // password
-let teacherAuthenticated = false;
+const TEACHER_PASSWORD = "Hill2012";
 
 /* DEADLINE */
 const DEADLINE = new Date("2026-04-18T23:59:59");
 
-/* DATA */
+/* LOAD DATA */
 let submissions = [];
 
-/* LOAD */
-function loadSubmissions() {
-    db.collection("submissions").get().then(snapshot => {
+function loadData() {
+    db.collection("submissions")
+    .orderBy("date", "desc")
+    .onSnapshot(snapshot => {
         submissions = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        renderTable();
+        render();
     });
 }
 
-/* SAVE */
-function saveSubmission(sub) {
-    db.collection("submissions").add(sub).then(loadSubmissions);
-}
-
-/* SCRATCH ID */
-function extractProjectId(input) {
-    const match = input.match(/projects\/(\d+)/);
-    if (match) return match[1];
-    if (/^\d+$/.test(input)) return input;
-    return null;
-}
-
 /* SUBMIT */
-document.getElementById("submission-form").onsubmit = function(e) {
+function submitProject(e) {
     e.preventDefault();
 
     if (new Date() > DEADLINE) {
-        alert("Deadline passed!");
+        alert("Deadline closed!");
         return;
     }
 
-    let name = document.getElementById("student-name").value.trim();
-    let title = document.getElementById("project-title").value.trim();
-    let link = document.getElementById("scratch-link").value.trim();
-    let desc = document.getElementById("description").value.trim();
-
-    if (!name || !title || !link || !desc) {
-        alert("Fill all fields");
-        return;
-    }
-
-    let id = extractProjectId(link);
-    if (!id) return alert("Invalid Scratch link");
-
-    saveSubmission({
-        student: name,
-        title,
-        link: `https://scratch.mit.edu/projects/${id}/`,
-        description: desc,
-        date: new Date().toISOString().split('T')[0],
+    db.collection("submissions").add({
+        student: name.value,
+        title: title.value,
+        link: link.value,
+        description: desc.value,
+        date: new Date().toISOString().split("T")[0],
         score: null,
         status: "Pending"
     });
 
-    this.reset();
-};
-
-/* TABLE */
-function renderTable() {
-    let html = "";
-
-    if (submissions.length === 0) {
-        html = `<tr><td colspan="4" class="p-3 text-center text-gray-400">No submissions yet</td></tr>`;
-    } else {
-        submissions.forEach(s => {
-            html += `
-            <tr class="border-t">
-                <td class="p-2">${s.student}</td>
-                <td class="p-2">${s.title}</td>
-                <td class="p-2 text-center">
-                    ${
-                        teacherAuthenticated
-                        ? `<input type="number" value="${s.score || ''}" 
-                           onchange="updateScore('${s.id}', this.value)"
-                           class="border w-16 text-center rounded">`
-                        : (s.score ?? '-')
-                    }
-                </td>
-                <td class="p-2 text-center">
-                    <span class="${s.status === 'Graded' ? 'text-green-600' : 'text-orange-500'}">
-                        ${s.status}
-                    </span>
-                </td>
-            </tr>`;
-        });
-    }
-
-    document.getElementById("table").innerHTML = html;
+    e.target.reset();
 }
 
-/* UPDATE SCORE */
-function updateScore(id, score) {
+/* RENDER */
+function render() {
+    table.innerHTML = submissions.map(s => `
+        <tr class="border-t">
+            <td class="p-2">${s.student}</td>
+            <td class="p-2">${s.title}</td>
+            <td class="p-2 text-center">
+                ${teacher ? `
+                    <input type="number" value="${s.score ?? ''}"
+                    onchange="grade('${s.id}', this.value)"
+                    class="border w-16 text-center">
+                ` : (s.score ?? "-")}
+            </td>
+            <td class="p-2 text-center">${s.status}</td>
+        </tr>
+    `).join("");
+}
+
+/* GRADE */
+function grade(id, score) {
     db.collection("submissions").doc(id).update({
         score: parseInt(score),
         status: "Graded"
-    }).then(loadSubmissions);
+    });
 }
 
-/* LOGIN */
-function verifyTeacherPassword() {
-    const input = document.getElementById('teacher-password').value;
-    const hashed = CryptoJS.MD5(input).toString();
+/* TEACHER LOGIN */
+function loginTeacher() {
+    const input = document.getElementById("teacher-password").value;
 
-    if (hashed === TEACHER_HASH) {
-        teacherAuthenticated = true;
+    if (input === TEACHER_PASSWORD) {
+        teacher = true;
         alert("Teacher mode enabled");
-        loadSubmissions();
+        render();
     } else {
         alert("Wrong password");
     }
 }
 
-/* DEADLINE */
-function updateCountdown() {
+/* DEADLINE UI */
+function updateDeadline() {
     const diff = DEADLINE - new Date();
 
     if (diff <= 0) {
-        document.getElementById("deadline-text").innerText = "Submission Closed";
-        document.getElementById("submit-btn").disabled = true;
+        document.getElementById("deadline").innerText = "Submission CLOSED";
+        document.getElementById("submitBtn").disabled = true;
         return;
     }
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    document.getElementById("deadline-text").innerText =
-        `Deadline in ${hours} hours`;
+    document.getElementById("deadline").innerText =
+        Math.floor(diff / 3600000) + " hours left";
 }
 
-setInterval(updateCountdown, 1000);
+setInterval(updateDeadline, 1000);
 
 /* INIT */
-loadSubmissions();
-updateCountdown();
+loadData();
+updateDeadline();
 
 </script>
 
