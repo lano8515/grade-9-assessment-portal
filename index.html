@@ -3,184 +3,177 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>CHS Scratch Portal</title>
+<title>Hill School Eldoret • Submission Portal</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <style>
 body { font-family: Inter, sans-serif; }
+.card { transition: 0.3s; }
+.card:hover { transform: translateY(-4px); }
 </style>
 </head>
 
-<body class="bg-slate-50">
+<body class="bg-slate-100">
 
-<header class="bg-blue-800 text-white p-4 flex justify-between items-center">
-    <h1 class="font-bold">CHS Scratch Portal</h1>
-
-    <div class="flex gap-2">
-        <input id="teacher-password" type="password" placeholder="Teacher password"
-               class="px-2 py-1 text-black rounded">
-        <button onclick="loginTeacher()" class="bg-white text-blue-800 px-3 py-1 rounded">
-            Login
-        </button>
-    </div>
+<!-- HEADER -->
+<header class="bg-blue-900 text-white p-4 flex justify-between">
+<h1 class="font-bold">🏫 Hill School Eldoret Portal</h1>
+<button onclick="openLogin()" class="bg-white text-blue-900 px-3 rounded">
+Teacher Login
+</button>
 </header>
 
-<div class="p-6 max-w-5xl mx-auto">
-
 <!-- DEADLINE -->
-<div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
-    ⏰ <span id="deadline"></span>
+<div class="text-center text-red-600 font-bold p-2">
+⏰ <span id="deadlineText"></span>
 </div>
 
+<!-- MAIN -->
+<div class="max-w-6xl mx-auto p-4 grid md:grid-cols-2 gap-4">
+
 <!-- FORM -->
-<form onsubmit="submitProject(event)" class="bg-white p-4 rounded shadow space-y-2">
-    <input id="name" placeholder="Student Name" class="w-full border p-2">
-    <input id="title" placeholder="Project Title" class="w-full border p-2">
-    <input id="link" placeholder="Scratch Link or ID" class="w-full border p-2">
-    <textarea id="desc" placeholder="Description" class="w-full border p-2"></textarea>
+<div class="bg-white p-4 rounded shadow card">
+<h2 class="font-bold mb-2">Submit Project</h2>
 
-    <button id="submitBtn" class="bg-blue-700 text-white w-full p-2">
-        Submit Project
-    </button>
-</form>
+<input id="student" placeholder="Student Name" class="border p-2 w-full mb-2 rounded">
+<input id="title" placeholder="Project Title" class="border p-2 w-full mb-2 rounded">
+<input id="link" placeholder="Scratch Link" class="border p-2 w-full mb-2 rounded">
+<textarea id="desc" placeholder="Description" class="border p-2 w-full mb-2 rounded"></textarea>
 
-<!-- TABLE -->
-<table class="w-full mt-6 bg-white shadow">
-    <thead class="bg-gray-200">
-        <tr>
-            <th class="p-2">Student</th>
-            <th class="p-2">Title</th>
-            <th class="p-2">Score</th>
-            <th class="p-2">Status</th>
-        </tr>
-    </thead>
-    <tbody id="table"></tbody>
-</table>
+<button onclick="submitProject()" class="bg-blue-700 text-white w-full p-2 rounded">
+Submit
+</button>
+</div>
 
+<!-- STUDENT VIEW -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-2">Submissions</h2>
+<div id="studentList"></div>
+</div>
+
+</div>
+
+<!-- TEACHER -->
+<div id="teacherPanel" class="hidden max-w-6xl mx-auto p-4">
+<h2 class="font-bold text-xl mb-2">Teacher Dashboard</h2>
+<div id="teacherList"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
+<div class="bg-white p-4 rounded shadow w-80">
+<h2 class="font-bold mb-2">Teacher Login</h2>
+<input id="password" type="password" class="border p-2 w-full mb-2 rounded">
+<button onclick="login()" class="bg-blue-700 text-white w-full p-2 rounded">
+Login
+</button>
+</div>
 </div>
 
 <script>
 
-/* 🔥 FIREBASE CONFIG (REPLACE THIS) */
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
-};
+/* 🔥 FIREBASE (PUT YOUR REAL CONFIG HERE) */
+firebase.initializeApp({
+apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_AUTH_DOMAIN",
+projectId: "YOUR_PROJECT_ID"
+});
 
-firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* STATE */
-let teacher = false;
-
-/* PASSWORD */
+/* SETTINGS */
 const TEACHER_PASSWORD = "Hill2012";
-
-/* DEADLINE */
 const DEADLINE = new Date("2026-04-18T23:59:59");
 
-/* LOAD DATA */
-let submissions = [];
+let isTeacher = false;
+let cache = [];
 
-function loadData() {
-    db.collection("submissions")
-    .orderBy("date", "desc")
-    .onSnapshot(snapshot => {
-        submissions = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        render();
-    });
+/* SAFE LOAD (fixes empty teacher dashboard issue) */
+function loadData(){
+db.collection("submissions").orderBy("date","desc")
+.onSnapshot(snapshot=>{
+cache = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+render();
+});
 }
 
 /* SUBMIT */
-function submitProject(e) {
-    e.preventDefault();
+function submitProject(){
 
-    if (new Date() > DEADLINE) {
-        alert("Deadline closed!");
-        return;
-    }
+if(new Date() > DEADLINE){
+alert("Deadline closed!");
+return;
+}
 
-    db.collection("submissions").add({
-        student: name.value,
-        title: title.value,
-        link: link.value,
-        description: desc.value,
-        date: new Date().toISOString().split("T")[0],
-        score: null,
-        status: "Pending"
-    });
+const data = {
+student: student.value,
+title: title.value,
+link: link.value,
+desc: desc.value,
+date: new Date().toISOString().split("T")[0],
+status: "Pending",
+score: null
+};
 
-    e.target.reset();
+db.collection("submissions").add(data);
+
+student.value = title.value = link.value = desc.value = "";
 }
 
 /* RENDER */
-function render() {
-    table.innerHTML = submissions.map(s => `
-        <tr class="border-t">
-            <td class="p-2">${s.student}</td>
-            <td class="p-2">${s.title}</td>
-            <td class="p-2 text-center">
-                ${teacher ? `
-                    <input type="number" value="${s.score ?? ''}"
-                    onchange="grade('${s.id}', this.value)"
-                    class="border w-16 text-center">
-                ` : (s.score ?? "-")}
-            </td>
-            <td class="p-2 text-center">${s.status}</td>
-        </tr>
-    `).join("");
+function render(){
+
+/* student view */
+studentList.innerHTML = cache.map(d=>`
+<div class="border p-2 mb-2 rounded">
+<b>${d.student}</b><br>${d.title}<br>
+Status: ${d.status}
+</div>
+`).join("");
+
+
+/* teacher view */
+teacherList.innerHTML = cache.map(d=>`
+<div class="bg-slate-100 p-2 mb-2 rounded">
+<b>${d.student}</b> - ${d.title}<br>
+Score: ${d.score ?? "Not graded"}
+</div>
+`).join("");
 }
 
-/* GRADE */
-function grade(id, score) {
-    db.collection("submissions").doc(id).update({
-        score: parseInt(score),
-        status: "Graded"
-    });
+/* LOGIN */
+function openLogin(){
+loginModal.classList.remove("hidden");
 }
 
-/* TEACHER LOGIN */
-function loginTeacher() {
-    const input = document.getElementById("teacher-password").value;
-
-    if (input === TEACHER_PASSWORD) {
-        teacher = true;
-        alert("Teacher mode enabled");
-        render();
-    } else {
-        alert("Wrong password");
-    }
+function login(){
+if(password.value === TEACHER_PASSWORD){
+isTeacher = true;
+teacherPanel.classList.remove("hidden");
+loginModal.classList.add("hidden");
+render();
+}else{
+alert("Wrong password");
+}
 }
 
-/* DEADLINE UI */
-function updateDeadline() {
-    const diff = DEADLINE - new Date();
+/* DEADLINE */
+setInterval(()=>{
+const diff = DEADLINE - new Date();
 
-    if (diff <= 0) {
-        document.getElementById("deadline").innerText = "Submission CLOSED";
-        document.getElementById("submitBtn").disabled = true;
-        return;
-    }
+deadlineText.innerText =
+diff > 0
+? Math.floor(diff/3600000) + " hours left"
+: "SUBMISSION CLOSED";
+},1000);
 
-    document.getElementById("deadline").innerText =
-        Math.floor(diff / 3600000) + " hours left";
-}
-
-setInterval(updateDeadline, 1000);
-
-/* INIT */
+/* START */
 loadData();
-updateDeadline();
 
 </script>
 
