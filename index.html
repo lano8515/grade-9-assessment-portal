@@ -186,6 +186,27 @@
                 </button>
             </div>
         </div>
+
+        <!-- TEACHER PASSWORD MODAL -->
+        <div id="teacher-login-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div class="bg-white rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+                <div class="w-16 h-16 mx-auto bg-blue-100 rounded-3xl flex items-center justify-center text-3xl mb-6">
+                    <i class="fa-solid fa-lock text-[#1e40af]"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800">Teacher Access</h3>
+                <p class="text-slate-600 mt-2">Enter your password to access the teacher dashboard</p>
+                <div class="mt-6">
+                    <input type="password" id="teacher-password" placeholder="Enter password" 
+                           class="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-[#1e40af]"
+                           onkeypress="if(event.key==='Enter') verifyTeacherPassword()">
+                    <p id="password-error" class="text-red-500 text-sm mt-2 hidden">Incorrect password. Try again.</p>
+                </div>
+                <button onclick="verifyTeacherPassword()" 
+                        class="mt-6 bg-[#1e40af] text-white px-10 py-3 rounded-3xl font-semibold w-full hover:bg-blue-700">
+                    Unlock Dashboard
+                </button>
+            </div>
+        </div>
     </div>
 
     <footer class="bg-white border-t py-6 text-center text-xs text-slate-400">
@@ -229,6 +250,7 @@
         // Current role
         let currentRole = 'student'
         let currentUser = { name: "Alex Kimani", role: "student" }
+        let teacherAuthenticated = false
 
         function saveSubmissions() {
             localStorage.setItem('chs_scratch_submissions', JSON.stringify(submissions))
@@ -377,7 +399,31 @@
             }
         }
 
+        function verifyTeacherPassword() {
+            const password = document.getElementById('teacher-password').value
+            const errorMsg = document.getElementById('password-error')
+            
+            if (password === 'teacher123') {
+                teacherAuthenticated = true
+                document.getElementById('teacher-login-modal').classList.add('hidden')
+                document.getElementById('student-view').classList.add('hidden')
+                document.getElementById('teacher-view').classList.remove('hidden')
+                document.getElementById('user-name').textContent = "Teacher Allan"
+                document.getElementById('user-role').innerHTML = `Pre-Technical Studies Teacher <span class="text-emerald-400">• Admin</span>`
+                renderTeacherTable()
+                errorMsg.classList.add('hidden')
+            } else {
+                errorMsg.classList.remove('hidden')
+                document.getElementById('teacher-password').value = ''
+            }
+        }
+
         function switchRole(role) {
+            if (role === 'teacher' && !teacherAuthenticated) {
+                document.getElementById('teacher-login-modal').classList.remove('hidden')
+                return
+            }
+            
             currentRole = role
             document.getElementById('student-tab').dataset.active = role === 'student'
             document.getElementById('teacher-tab').dataset.active = role === 'teacher'
@@ -386,7 +432,7 @@
             document.getElementById('teacher-view').classList.toggle('hidden', role !== 'teacher')
             
             if (role === 'teacher') {
-                document.getElementById('user-name').textContent = "Mr. Peter Ochieng"
+                document.getElementById('user-name').textContent = "Teacher Allan"
                 document.getElementById('user-role').innerHTML = `Pre-Technical Studies Teacher <span class="text-emerald-400">• Admin</span>`
                 renderTeacherTable()
             } else {
@@ -402,9 +448,17 @@
 
         function logout() {
             if (confirm("Switch user or log out?")) {
-                // Simple demo reset
+                // Reset authentication
+                teacherAuthenticated = false
+                document.getElementById('teacher-login-modal').classList.add('hidden')
                 currentUser.name = currentUser.name === "Alex Kimani" ? "Mary Wanjiku" : "Alex Kimani"
                 document.getElementById('user-name').textContent = currentUser.name
+                currentRole = 'student'
+                document.getElementById('student-tab').dataset.active = true
+                document.getElementById('teacher-tab').dataset.active = false
+                document.getElementById('student-view').classList.remove('hidden')
+                document.getElementById('teacher-view').classList.add('hidden')
+                document.getElementById('user-role').textContent = "Grade 9 • Pre-Tech"
                 if (currentRole === 'student') renderMySubmissions()
             }
         }
