@@ -4,100 +4,67 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title> Hill School • Scratch Portal</title>
+<title>Central Hill School • Scratch Portal</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<!-- Crypto -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<style>
-body { font-family: 'Inter', sans-serif; }
-.card { transition: 0.3s; }
-.card:hover { transform: translateY(-5px); }
-</style>
 
 </head>
 
 <body class="bg-slate-50">
 
-<!-- HEADER -->
-<header class="bg-blue-800 text-white p-5 flex justify-between items-center shadow-lg">
-    <h1 class="text-2xl font-bold flex items-center gap-2">
-        <i class="fa-solid fa-cube"></i>
-        CHS Scratch Portal
-    </h1>
+<header class="bg-blue-800 text-white p-5 flex justify-between items-center">
+    <h1 class="text-xl font-bold">CHS Scratch Portal</h1>
 
-    <div class="flex gap-3">
-        <input type="password" id="teacher-password" placeholder="Teacher password"
-            class="px-3 py-2 rounded text-black">
-        <button onclick="verifyTeacherPassword()" class="bg-white text-blue-800 px-4 py-2 rounded">
-            Login
-        </button>
+    <div class="flex gap-2">
+        <input type="password" id="teacher-password" placeholder="Teacher password" class="px-2 py-1 text-black rounded">
+        <button onclick="verifyTeacherPassword()" class="bg-white text-blue-800 px-3 rounded">Login</button>
     </div>
 </header>
 
-<div class="max-w-6xl mx-auto p-6">
+<div class="p-6 max-w-6xl mx-auto">
 
 <!-- DEADLINE -->
-<div class="bg-red-100 text-red-700 p-4 rounded-xl mb-6 text-center font-medium">
+<div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
     ⏰ <span id="deadline-text"></span>
 </div>
 
-<div class="grid md:grid-cols-2 gap-6">
-
 <!-- FORM -->
-<div class="bg-white p-6 rounded-2xl shadow card">
-    <h2 class="text-xl font-bold mb-4">
-        <i class="fa-solid fa-paper-plane text-blue-700"></i> Submit Project
-    </h2>
+<form id="submission-form" class="bg-white p-4 rounded shadow mb-6 space-y-2">
+    <input id="student-name" placeholder="Your Name" class="w-full border p-2 rounded">
+    <input id="project-title" placeholder="Project Title" class="w-full border p-2 rounded">
+    <input id="scratch-link" placeholder="Scratch Link or ID" class="w-full border p-2 rounded">
+    <textarea id="description" placeholder="Description" class="w-full border p-2 rounded"></textarea>
 
-    <form id="submission-form" class="space-y-3">
-        <input id="student-name" placeholder="Your Name" class="w-full border p-3 rounded">
-        <input id="project-title" placeholder="Project Title" class="w-full border p-3 rounded">
-        <input id="scratch-link" placeholder="Scratch Link or ID" class="w-full border p-3 rounded">
-        <textarea id="description" placeholder="Description" class="w-full border p-3 rounded"></textarea>
-
-        <button id="submit-btn" class="bg-blue-700 text-white w-full py-3 rounded font-semibold">
-            Submit Project
-        </button>
-    </form>
-</div>
+    <button id="submit-btn" class="bg-blue-700 text-white px-4 py-2 rounded w-full">
+        Submit
+    </button>
+</form>
 
 <!-- TABLE -->
-<div class="bg-white p-6 rounded-2xl shadow card">
-    <h2 class="text-xl font-bold mb-4">
-        <i class="fa-solid fa-table text-blue-700"></i> Submissions
-    </h2>
+<table class="w-full bg-white rounded shadow">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="p-2 text-left">Student</th>
+            <th class="p-2 text-left">Title</th>
+            <th class="p-2">Score</th>
+            <th class="p-2">Status</th>
+        </tr>
+    </thead>
+    <tbody id="table"></tbody>
+</table>
 
-    <div class="overflow-auto">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-100">
-                <tr>
-                    <th class="p-2 text-left">Student</th>
-                    <th class="p-2 text-left">Title</th>
-                    <th class="p-2">Score</th>
-                    <th class="p-2">Status</th>
-                </tr>
-            </thead>
-            <tbody id="table"></tbody>
-        </table>
-    </div>
-</div>
-
-</div>
 </div>
 
 <script>
 
-/* 🔥 FIREBASE */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -107,13 +74,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* 🔐 PASSWORD */
+/* PASSWORD */
 const TEACHER_HASH = "5f4dcc3b5aa765d61d8327deb882cf99"; // password
 let teacherAuthenticated = false;
 
-/* ⏰ DEADLINE */
+/* DEADLINE */
 const DEADLINE = new Date("2026-04-18T23:59:59");
 
+/* DATA */
 let submissions = [];
 
 /* LOAD */
@@ -132,7 +100,7 @@ function saveSubmission(sub) {
     db.collection("submissions").add(sub).then(loadSubmissions);
 }
 
-/* SCRATCH */
+/* SCRATCH ID */
 function extractProjectId(input) {
     const match = input.match(/projects\/(\d+)/);
     if (match) return match[1];
@@ -149,10 +117,10 @@ document.getElementById("submission-form").onsubmit = function(e) {
         return;
     }
 
-    let name = student-name.value.trim();
-    let title = project-title.value.trim();
-    let link = scratch-link.value.trim();
-    let desc = description.value.trim();
+    let name = document.getElementById("student-name").value.trim();
+    let title = document.getElementById("project-title").value.trim();
+    let link = document.getElementById("scratch-link").value.trim();
+    let desc = document.getElementById("description").value.trim();
 
     if (!name || !title || !link || !desc) {
         alert("Fill all fields");
@@ -160,7 +128,7 @@ document.getElementById("submission-form").onsubmit = function(e) {
     }
 
     let id = extractProjectId(link);
-    if (!id) return alert("Invalid link");
+    if (!id) return alert("Invalid Scratch link");
 
     saveSubmission({
         student: name,
@@ -180,32 +148,32 @@ function renderTable() {
     let html = "";
 
     if (submissions.length === 0) {
-        html = `<tr><td colspan="4" class="p-4 text-center text-gray-400">No submissions yet</td></tr>`;
+        html = `<tr><td colspan="4" class="p-3 text-center text-gray-400">No submissions yet</td></tr>`;
+    } else {
+        submissions.forEach(s => {
+            html += `
+            <tr class="border-t">
+                <td class="p-2">${s.student}</td>
+                <td class="p-2">${s.title}</td>
+                <td class="p-2 text-center">
+                    ${
+                        teacherAuthenticated
+                        ? `<input type="number" value="${s.score || ''}" 
+                           onchange="updateScore('${s.id}', this.value)"
+                           class="border w-16 text-center rounded">`
+                        : (s.score ?? '-')
+                    }
+                </td>
+                <td class="p-2 text-center">
+                    <span class="${s.status === 'Graded' ? 'text-green-600' : 'text-orange-500'}">
+                        ${s.status}
+                    </span>
+                </td>
+            </tr>`;
+        });
     }
 
-    submissions.forEach(s => {
-        html += `
-        <tr class="border-t">
-            <td class="p-2">${s.student}</td>
-            <td class="p-2">${s.title}</td>
-            <td class="p-2 text-center">
-                ${
-                    teacherAuthenticated
-                    ? `<input type="number" value="${s.score || ''}" 
-                       onchange="updateScore('${s.id}', this.value)"
-                       class="border w-16 text-center rounded">`
-                    : (s.score ?? '-')
-                }
-            </td>
-            <td class="p-2 text-center">
-                <span class="${s.status === 'Graded' ? 'text-green-600' : 'text-orange-500'}">
-                    ${s.status}
-                </span>
-            </td>
-        </tr>`;
-    });
-
-    table.innerHTML = html;
+    document.getElementById("table").innerHTML = html;
 }
 
 /* UPDATE SCORE */
@@ -218,7 +186,8 @@ function updateScore(id, score) {
 
 /* LOGIN */
 function verifyTeacherPassword() {
-    const hashed = CryptoJS.MD5(document.getElementById('teacher-password').value).toString();
+    const input = document.getElementById('teacher-password').value;
+    const hashed = CryptoJS.MD5(input).toString();
 
     if (hashed === TEACHER_HASH) {
         teacherAuthenticated = true;
@@ -229,18 +198,19 @@ function verifyTeacherPassword() {
     }
 }
 
-/* DEADLINE UI */
+/* DEADLINE */
 function updateCountdown() {
     const diff = DEADLINE - new Date();
 
     if (diff <= 0) {
-        deadline-text.innerText = "Submission Closed";
-        submit-btn.disabled = true;
+        document.getElementById("deadline-text").innerText = "Submission Closed";
+        document.getElementById("submit-btn").disabled = true;
         return;
     }
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    deadline-text.innerText = `Deadline in ${hours} hours`;
+    document.getElementById("deadline-text").innerText =
+        `Deadline in ${hours} hours`;
 }
 
 setInterval(updateCountdown, 1000);
